@@ -12,8 +12,7 @@ import com.sun.jdi.InvalidTypeException
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-// Wrapper class to aid Assign operator handle Insert and Delete operations
-case class operationWrapper(operationType:String,set:Set[Any])
+
 
 // Custom exception class
 final case class DSLException(private val message: String = "",
@@ -30,6 +29,8 @@ object DslMethods {
   private val macrosMap: mutable.Map[String,Operator] = mutable.Map()
   // Map to store all the Class definitions
   private val classMap: mutable.Map[String,Any] = mutable.Map("ClassMap" -> true)
+  // Wrapper class to aid Assign operator handle Insert and Delete operations
+  case class operationWrapper(operationType:String,set:Operator)
 
   enum Operator:
     // Acceptable Set operations
@@ -68,6 +69,8 @@ object DslMethods {
     case ExceptionClassDef(name: String, args: Operator*)
     case Catch(name: String, exps: Operator*)
     case ThrowException(name: String, args: Operator* )
+    // HW 5
+    case PartialEval(exps: Any)
 
 
   import DslMethods.Operator.*
@@ -77,6 +80,11 @@ object DslMethods {
     if (!exceptionDataMap("exceptionOccurred").asInstanceOf[Boolean])
     {
       op match {
+
+      // Partial exp eval
+      case PartialEval(exps) =>
+        compute(exps.asInstanceOf[Operator])
+
       // Exception Class definition
       case ExceptionClassDef(name, args*) =>
         // use classCreationHelper to create Exception class in classMap
@@ -404,17 +412,63 @@ object DslMethods {
 
       // Return a wrapper object containing elements to be inserted
       case Insert(args*) =>
-        operationWrapper("Insert", validateInputs(scopeMap, args *))
+        val tempSet = validateInputs(scopeMap, args *)
+        val mutList = new mutable.ListBuffer[Operator]()
+        args.foreach{i =>
+          if (tempSet.contains(i)){
+            tempSet -= i
+            mutList += i
+          }
+        }
+        println(tempSet)
+        if(mutList.isEmpty){
+          operationWrapper("Insert", Value(tempSet.toSet))
+        }
+        else{
+          if(mutList.length == 1){
+            operationWrapper("Insert", Insert(Value(tempSet.toSet),mutList.head))
+          }
+          else{
+            operationWrapper("Insert", Insert(Value(tempSet.toSet),mutList.head,mutList(1)))
+          }
+        }
+
 
       // Return a wrapper object containing elements to be deleted
       case Delete(args*) =>
-        operationWrapper("Delete", validateInputs(scopeMap, args *))
+        val tempSet = validateInputs(scopeMap, args *)
+        val mutList = new mutable.ListBuffer[Operator]()
+        args.foreach{i =>
+          if (tempSet.contains(i)){
+            tempSet -= i
+            mutList += i
+          }
+        }
+        if(mutList.isEmpty){
+          operationWrapper("Delete", Value(tempSet.toSet))
+        }
+        else{
+          if(mutList.length == 1){
+            operationWrapper("Delete", Delete(Value(tempSet.toSet),mutList.head))
+          }
+          else{
+            operationWrapper("Delete", Delete(Value(tempSet.toSet),mutList.head,mutList(1)))
+          }
+        }
 
       // Perform Set Union of 2 inputs sets
       case Union(input1,input2) =>
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
-        i1.union(i2).to(mutable.Set)
+        if(i1.equals(Set("N/A")) ){
+          Union(input1,Value(i2))
+        }else if(i2.equals(Set("N/A"))){
+          Union(Value(i1),input2)
+        }
+        else{
+          i1.union(i2).to(mutable.Set)
+        }
+
 
       // Perform Set Difference of 2 inputs sets
       case Difference(input1,input2) =>
@@ -495,34 +549,46 @@ object DslMethods {
 
             obj.operationType match {
               case "Insert" =>
-                n match {
-                  // If a set already exists, the new elements are added to it
-                  case existingSet : mutable.Set[Any] =>
-                    existingSet ++= obj.set
-                    existingSet
-                  // If there is no set, it is created or it overrides any existing
-                  // data mapped to the given name
-                  case anythingElse:Any =>
-                    //val valSet = mutable.Set[Any](set.toArray:_*)
-                    val currentScopeLevel = if (shouldOverrideData) {
-                      scopeMap}
-                    else {
-                      findScopeLevel(variableName,scopeMap)
+                obj.set match{
+                  case setData:Value =>
+                    n match {
+                      // If a set already exists, the new elements are added to it
+                      case existingSet : mutable.Set[Any] =>
+                        existingSet ++= compute(setData).asInstanceOf[Set[Any]]
+                        existingSet
+                      // If there is no set, it is created or it overrides any existing
+                      // data mapped to the given name
+                      case anythingElse:Any =>
+                        //val valSet = mutable.Set[Any](set.toArray:_*)
+                        val currentScopeLevel = if (shouldOverrideData) {
+                          scopeMap}
+                        else {
+                          findScopeLevel(variableName,scopeMap)
+                        }
+                        //val currentScopeLevel = findScopeLevel(variableName,scopeMap)
+                        currentScopeLevel.put(variableName,compute(setData).asInstanceOf[Set[Any]].to(mutable.Set))
+                        currentScopeLevel(variableName)
                     }
-                    //val currentScopeLevel = findScopeLevel(variableName,scopeMap)
-                    currentScopeLevel.put(variableName,obj.set.to(mutable.Set))
-                    currentScopeLevel(variableName)
+                  case _ =>
+                    Assign(name, obj.set.asInstanceOf[Insert])
                 }
+
               case "Delete" =>
-                n match {
-                  // If a set already exists, the elements are deleted from it
-                  case existingSet : mutable.Set[Any] =>
-                    existingSet --= obj.set
-                    existingSet
-                  // If the set does not exist, show error message
-                  case _:Any =>
-                    throw DSLException("Set not found")
+                obj.set match{
+                  case setData:Value =>
+                    n match {
+                      // If a set already exists, the elements are deleted from it
+                      case existingSet : mutable.Set[Any] =>
+                        existingSet --= compute(setData).asInstanceOf[Set[Any]]
+                        existingSet
+                      // If the set does not exist, show error message
+                      case _:Any =>
+                        throw DSLException("Set not found")
+                    }
+                  case _ =>
+                    Assign(name, obj.set.asInstanceOf[Delete])
                 }
+
 
             }
           case _=>
@@ -650,23 +716,37 @@ object DslMethods {
     compute(input,scopeMap) match {
       case immutableSet : Set[Any] => immutableSet
       case mutableSet : mutable.Set[Any] => mutableSet.toSet
+      case "N/A" => Set("N/A")
       case _ =>
         throw DSLException("Input in Set operations has to be a Set.")
     }
   }
 
   // Parse though multiple sets/values and combines them into a single set for insertion or deletion
-  def validateInputs(scopeMap:mutable.Map[String,Any],args:Operator*) : Set[Any] = {
+  def validateInputs(scopeMap:mutable.Map[String,Any],args:Operator*) : mutable.Set[Any] = {
     val mutList = mutable.Set.empty[Any]
     args.foreach{i =>
       val g = compute(i,scopeMap)
-      if (g != "N/A") {mutList += g} else {throw DSLException("Variable(s) does not exist")}
+      if (g != "N/A") {mutList += g} else {mutList += i}
+      // if (g != "N/A") {mutList += g} else {throw DSLException("Variable(s) does not exist")}
     }
-    mutList.toSet
+    mutList
   }
 
   // Main method
   @main def runCode(): Unit = {
   // Usage defined in test class
+//    compute(Assign(Variable("set5"), Insert(Value("2"), Value(3), Value(89))))
+//    compute(Assign(Variable("set6"), Insert(Value("a"), Value(89))))
+//    val actual = compute(Union(Variable("set5"),Variable("set7")))
+//    compute(Assign(Variable("set7"), Insert(Value("a"), Value(89))))
+//    val op = compute(PartialEval(actual))
+//    print(op)
+
+    val op2 = compute(Assign(Variable("set222"), Insert(Variable("set72"), Value(3),Value(12))))
+    compute(Assign(Variable("set72"), Insert(Value("a"), Value(89))))
+    val op3 = compute(PartialEval(op2))
+    println(op2)
+    println(op3)
   }
 }
