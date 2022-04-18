@@ -5,7 +5,7 @@ CS474 - Homework 4
 */
 /*
 To DO
-CatchException check if Catch block is present in the end of declaration
+1- Modify all possible exps to handle partial eval
 */
 import com.sun.jdi.InvalidTypeException
 
@@ -420,7 +420,7 @@ object DslMethods {
             mutList += i
           }
         }
-        println(tempSet)
+
         if(mutList.isEmpty){
           operationWrapper("Insert", Value(tempSet.toSet))
         }
@@ -460,6 +460,7 @@ object DslMethods {
       case Union(input1,input2) =>
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
+
         if(i1.equals(Set("N/A")) ){
           Union(input1,Value(i2))
         }else if(i2.equals(Set("N/A"))){
@@ -474,25 +475,61 @@ object DslMethods {
       case Difference(input1,input2) =>
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
-        i1.diff(i2).to(mutable.Set)
+
+        if(i1.equals(Set("N/A")) ){
+          Difference(input1,Value(i2))
+        }else if(i2.equals(Set("N/A"))){
+          Difference(Value(i1),input2)
+        }
+        else{
+          i1.diff(i2).to(mutable.Set)
+        }
+
 
       // Perform Set Intersection of 2 inputs sets
       case Intersection(input1,input2) =>
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
-        i1.intersect(i2).to(mutable.Set)
+
+        if(i1.equals(Set("N/A")) ){
+          Intersection(input1,Value(i2))
+        }else if(i2.equals(Set("N/A"))){
+          Intersection(Value(i1),input2)
+        }
+        else{
+          i1.intersect(i2).to(mutable.Set)
+        }
+
 
       // Perform Set symmetric difference of 2 inputs sets
       case SymDiff(input1,input2) =>
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
-        i1.union(i2).diff(i1.intersect(i2)).to(mutable.Set)
+
+        if(i1.equals(Set("N/A")) ){
+          SymDiff(input1,Value(i2))
+        }else if(i2.equals(Set("N/A"))){
+          SymDiff(Value(i1),input2)
+        }
+        else{
+          i1.union(i2).diff(i1.intersect(i2)).to(mutable.Set)
+        }
+
 
       // Perform Set product of 2 inputs sets
       case Product(input1,input2) =>
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
-        i1.flatMap(x => i2.map(y => (x,y))).to(mutable.Set)
+
+        if(i1.equals(Set("N/A")) ){
+          Product(input1,Value(i2))
+        }else if(i2.equals(Set("N/A"))){
+          Product(Value(i1),input2)
+        }
+        else{
+          i1.flatMap(x => i2.map(y => (x,y))).to(mutable.Set)
+        }
+
 
       // Check if a set contains an element
       case Check(name,value) =>
@@ -727,7 +764,18 @@ object DslMethods {
     val mutList = mutable.Set.empty[Any]
     args.foreach{i =>
       val g = compute(i,scopeMap)
-      if (g != "N/A") {mutList += g} else {mutList += i}
+
+      if(g.isInstanceOf[Set[Any]]){
+        mutList ++= g.asInstanceOf[Set[Any]]
+      }
+      else if (g.isInstanceOf[mutable.Set[Any]])
+        {
+          mutList ++= g.asInstanceOf[mutable.Set[Any]]
+        }
+      else{
+        if (g != "N/A") {mutList += g} else {mutList += i}
+      }
+
       // if (g != "N/A") {mutList += g} else {throw DSLException("Variable(s) does not exist")}
     }
     mutList
@@ -736,17 +784,29 @@ object DslMethods {
   // Main method
   @main def runCode(): Unit = {
   // Usage defined in test class
-//    compute(Assign(Variable("set5"), Insert(Value("2"), Value(3), Value(89))))
-//    compute(Assign(Variable("set6"), Insert(Value("a"), Value(89))))
-//    val actual = compute(Union(Variable("set5"),Variable("set7")))
-//    compute(Assign(Variable("set7"), Insert(Value("a"), Value(89))))
-//    val op = compute(PartialEval(actual))
-//    print(op)
+    compute(Assign(Variable("set5"), Insert(Value("2"), Value(3), Value(89))))
+    compute(Assign(Variable("set6"), Insert(Value("a"), Value(89))))
+    val actual = compute(Difference(Variable("set5"),Variable("set7")))
+    compute(Assign(Variable("set7"), Insert(Value("a"), Value(89))))
+    val op = compute(PartialEval(actual))
+    println(actual)
+    println(op)
 
-    val op2 = compute(Assign(Variable("set222"), Insert(Variable("set72"), Value(3),Value(12))))
-    compute(Assign(Variable("set72"), Insert(Value("a"), Value(89))))
-    val op3 = compute(PartialEval(op2))
-    println(op2)
-    println(op3)
+//    val op2 = compute(Assign(Variable("set222"), Insert(Variable("set72"), Value(3),Value(12),Variable("set72e"))))
+//    compute(Assign(Variable("set72"), Value("a")))
+//    val op3 = compute(PartialEval(op2))
+//    println(op2)
+//    println(op3)
+//    compute(Assign(Variable("set72e"), Value("j")))
+//    val op4 = compute(PartialEval(op2))
+//    println(op4)
+
+//    compute(Assign(Variable("set4"), Insert(Value("2"), Value(3))))
+//
+//    val actual = compute(Assign(Variable("set4"), Delete(Variable("set11"))))
+//    compute(Assign(Variable("set11"), Value("2")))
+//    val actual1 = compute(PartialEval(actual))
+//    print(actual)
+//    print(actual1)
   }
 }
