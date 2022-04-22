@@ -15,14 +15,14 @@ class testHw5 extends AnyFlatSpec with Matchers {
 
   it should "check the partial eval with 1 undefined var -  Union" in {
     // Define 1 set variable
-    compute(Assign(Variable("set5"), Insert(Value("abc"), Value(3))))
+    compute(Assign(Variable("set59"), Insert(Value("abc"), Value(3))))
     // 1 variable is defined and the other is not. Evaluates to partial exp.
-    val partialExp = compute(Union(Variable("set5"),Variable("set6")))
-    // set5 data is retrieved and substituted but set6 is as it is.
-    val expected = Union(Value(Set("abc", 3)),Variable("set6"))
+    val partialExp = compute(Union(Variable("set59"),Variable("set69")))
+    // set59 data is retrieved and substituted but set69 is as it is.
+    val expected = Union(Value(Set("abc", 3)),Variable("set69"))
     expected shouldBe partialExp
     // define set6
-    compute(Assign(Variable("set6"), Insert(Value("abc"), Value(89))))
+    compute(Assign(Variable("set69"), Insert(Value("abc"), Value(89))))
     // now when the partial eval expression is called, it performs union and outputs a set.
     val completeEval = compute(PartialEval(partialExp))
     // expected output set data.
@@ -32,13 +32,13 @@ class testHw5 extends AnyFlatSpec with Matchers {
 
   it should "check the partial eval with 2 undefined var - Difference" in {
     // Both variables are not defined. Evaluates to partial exp.
-    val partialExp = compute(Difference(Variable("set9"),Variable("set10")))
-    // set9 and set10 data are as they are. No change.
-    val expected = Difference(Variable("set9"),Variable("set10"))
+    val partialExp = compute(Difference(Variable("set99"),Variable("set109")))
+    // set99 and set109 data are as they are. No change.
+    val expected = Difference(Variable("set99"),Variable("set109"))
     expected shouldBe partialExp
-    // define set9 and set10
-    compute(Assign(Variable("set9"), Insert(Value("abc"), Value(3))))
-    compute(Assign(Variable("set10"), Insert(Value("abc"))))
+    // define set99 and set109
+    compute(Assign(Variable("set99"), Insert(Value("abc"), Value(3))))
+    compute(Assign(Variable("set109"), Insert(Value("abc"))))
     // now when the partial eval expression is called, it performs difference and outputs a set.
     val completeEval = compute(PartialEval(partialExp))
     // expected output set data.
@@ -62,9 +62,9 @@ class testHw5 extends AnyFlatSpec with Matchers {
     compute(Assign(Variable("set21"), Insert(Value("abc"), Value(4), Value(89))))
     // As set19 is not defined, it is left as is.
     // set21 is defined. So 3 and data in set21 is optimized into a single Value and partial exp is returned.
-    val partialExp = compute(Assign(Variable("set2"), Insert(Variable("set19"),Variable("set21"), Value(3))))
+    val partialExp = compute(Assign(Variable("set299"), Insert(Variable("set19"),Variable("set21"), Value(3))))
     // Set("abc",3, 4, 89) is the result from optimization operation.
-    val expected = Assign(Variable("set2"),Insert(Value(Set("abc",3, 4, 89)), Variable("set19")))
+    val expected = Assign(Variable("set299"),Insert(Value(Set("abc",3, 4, 89)), Variable("set19")))
     expected shouldBe partialExp
     // define set19
     compute(Assign(Variable("set19"), Insert(Value(90))))
