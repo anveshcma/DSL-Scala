@@ -461,10 +461,12 @@ object DslMethods {
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
 
-        if(i1.equals(Set("N/A")) ){
+        if(i1.equals(Set("N/A")) & !i2.equals(Set("N/A")) ){
           Union(input1,Value(i2))
-        }else if(i2.equals(Set("N/A"))){
+        }else if(!i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
           Union(Value(i1),input2)
+        }else if(i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
+          Union(input1,input2)
         }
         else{
           i1.union(i2).to(mutable.Set)
@@ -786,11 +788,13 @@ object DslMethods {
   // Usage defined in test class
     compute(Assign(Variable("set5"), Insert(Value("2"), Value(3), Value(89))))
     compute(Assign(Variable("set6"), Insert(Value("a"), Value(89))))
-    val actual = compute(Difference(Variable("set5"),Variable("set7")))
+    val actual = compute(Union(Variable("set5s"),Variable("set7")))
     compute(Assign(Variable("set7"), Insert(Value("a"), Value(89))))
     val op = compute(PartialEval(actual))
+    compute(Assign(Variable("set5s"), Insert(Value("aq"), Value(82329))))
+    val op1 = compute(PartialEval(op))
     println(actual)
-    println(op)
+    println(op1)
 
 //    val op2 = compute(Assign(Variable("set222"), Insert(Variable("set72"), Value(3),Value(12),Variable("set72e"))))
 //    compute(Assign(Variable("set72"), Value("a")))
