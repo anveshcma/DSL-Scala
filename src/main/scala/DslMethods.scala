@@ -24,13 +24,18 @@ object DslMethods {
   val tempExceptionMap:  mutable.Map[String, Any] = mutable.Map("name" ->"")
   private val exceptionDataMap: mutable.Map[String,Any] = mutable.Map("exceptionOccurred" -> false, "exceptionObjectData" ->tempExceptionMap)
   // Map to store all the variable bindings and objects
-  private val mainBindingMap: mutable.Map[String,Any] = mutable.Map("MainMap" -> true)
+  val mainBindingMap: mutable.Map[String,Any] = mutable.Map("MainMap" -> true)
   // Map to store the macros
   private val macrosMap: mutable.Map[String,Operator] = mutable.Map()
   // Map to store all the Class definitions
   private val classMap: mutable.Map[String,Any] = mutable.Map("ClassMap" -> true)
   // Wrapper class to aid Assign operator handle Insert and Delete operations
   case class operationWrapper(operationType:String,set:Operator)
+  trait SetExpression:
+    def map(f: Operator => Operator): Operator
+  case class setMonad(setExp: Operator) extends SetExpression:
+    override def map(f: Operator => Operator): Operator =
+      f(setExp)
 
   enum Operator:
     // Acceptable Set operations
@@ -461,7 +466,7 @@ object DslMethods {
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
 
-        if(i1.equals(Set("N/A")) & !i2.equals(Set("N/A")) ){
+        if(i1.equals(Set("N/A")) & !i2.equals(Set("N/A"))){
           Union(input1,Value(i2))
         }else if(!i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
           Union(Value(i1),input2)
@@ -478,10 +483,12 @@ object DslMethods {
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
 
-        if(i1.equals(Set("N/A")) ){
+        if(i1.equals(Set("N/A")) & !i2.equals(Set("N/A"))){
           Difference(input1,Value(i2))
-        }else if(i2.equals(Set("N/A"))){
+        }else if(!i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
           Difference(Value(i1),input2)
+        }else if(i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
+          Difference(input1,input2)
         }
         else{
           i1.diff(i2).to(mutable.Set)
@@ -493,10 +500,12 @@ object DslMethods {
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
 
-        if(i1.equals(Set("N/A")) ){
+        if(i1.equals(Set("N/A")) & !i2.equals(Set("N/A"))){
           Intersection(input1,Value(i2))
-        }else if(i2.equals(Set("N/A"))){
+        }else if(!i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
           Intersection(Value(i1),input2)
+        }else if(i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
+          Intersection(input1,input2)
         }
         else{
           i1.intersect(i2).to(mutable.Set)
@@ -508,10 +517,12 @@ object DslMethods {
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
 
-        if(i1.equals(Set("N/A")) ){
+        if(i1.equals(Set("N/A")) & !i2.equals(Set("N/A"))){
           SymDiff(input1,Value(i2))
-        }else if(i2.equals(Set("N/A"))){
+        }else if(!i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
           SymDiff(Value(i1),input2)
+        }else if(i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
+          SymDiff(input1,input2)
         }
         else{
           i1.union(i2).diff(i1.intersect(i2)).to(mutable.Set)
@@ -523,10 +534,12 @@ object DslMethods {
         val i1 = validateSetInput(input1,scopeMap)
         val i2 = validateSetInput(input2,scopeMap)
 
-        if(i1.equals(Set("N/A")) ){
+        if(i1.equals(Set("N/A")) & !i2.equals(Set("N/A"))){
           Product(input1,Value(i2))
-        }else if(i2.equals(Set("N/A"))){
+        }else if(!i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
           Product(Value(i1),input2)
+        }else if(i1.equals(Set("N/A")) & i2.equals(Set("N/A"))){
+          Product(input1,input2)
         }
         else{
           i1.flatMap(x => i2.map(y => (x,y))).to(mutable.Set)
@@ -804,7 +817,7 @@ object DslMethods {
 //    compute(Assign(Variable("set72e"), Value("j")))
 //    val op4 = compute(PartialEval(op2))
 //    println(op4)
-
+//
 //    compute(Assign(Variable("set4"), Insert(Value("2"), Value(3))))
 //
 //    val actual = compute(Assign(Variable("set4"), Delete(Variable("set11"))))
