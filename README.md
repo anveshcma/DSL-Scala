@@ -1,10 +1,10 @@
-# CS 474 - HW 4
+# CS 474 - HW 5
 Anvesh Koganti <br />
 670875073<br /><br />
-HW-4 specific documentation can be found in this section:
-[Exception Definition and Usage](#exception-definition-and-usage) and [If construct](#if-construct)
+HW-5 specific documentation can be found in this section:
+[Partial Evaluation and Optimization](#partial-evaluation-and-optimization) and [Monad Function Map](#monad-function-map)
 <br />
-Test class specific to HW-4: testHW4.scala
+Test class specific to HW-5: testHw5.scala
 # Usage
 Use 'sbt clean compile test' to run the test script. Use 'sbt clean compile run' to run the main method. <br />
 To use the methods from the DslMethods.scala file use these 2 lines at the top of the file: <br />
@@ -18,9 +18,67 @@ To use the methods from the DslMethods.scala file use these 2 lines at the top o
 # Language Syntax
 All operators must be enclosed in "compute(...)"
 
+## Partial Evaluation and Optimization
+All the Set operation defined in HW-1 have been modified to perform partial evaluation
+if or more variables are not present in the reference environment.<br />
+Operations that support partial evaluation and optimization: Union, Intersection, Difference, Product, SymDiff, Insert, Delete and Assign.<br />
+```
+// In this expression, there are four scenarios
+// 1. Both set1 and set2 are defined
+// 2. set1 is defined and set2 is undefined
+// 3. set1 is undefined and set2 is defined
+// 4. both set1 and set2 are undefined
+// Case 1 will result in an completly evaluated set
+// Case 2,3,4 will result in partial eval expression
+    val partialExp = compute(Union(Variable("set1"),Variable("set2")))
+// To evaluate partial exp, use the following syntax
+// This expression will result in a set if both the variables are defined in the reference env.
+    compute(PartialEval(partialExp))
+```
+### PartialEval
+`PartialEval`(Expression):
+This signature is used to invoke a partially evaluated expression. <br />
+Valid expression include partially evaluated Union, Intersection, Difference, Product, SymDiff, Insert, Delete and Assign expressions.<br />
+
+
+## Monad Function Map
+The monadic function map works on a container of expressions, and it basically applies the function ( passed as a parameter)
+to the expression and return output based on how the function processes the data.<br />
+We can define the function to process the elements of the expression and return a partially evaluated expression
+or choose to evaluate it completely and return the final resultant set.<br />
+```
+// function definition 
+// This function must accept an expression and evalute it.
+// The test class file testHw5.scala has 3 examples for reference.
+def functionName(set:Operator) : Operator =
+      set match
+        case Value(x) =>
+        case Variable(y) =>
+        .
+        .
+        .
+        
+        case _ =>
+          throw DSLException("The defined function cannot optimize this expression.")
+// Expression
+    val expression = Product(Variable("set1"),Variable("set2"))
+// Call map operation on the expression. Note that this operation does not need to be called using compute(..)
+    setMonad(expression).map(functionName)
+
+```
+## setMonad
+`setMonad(Expression)`;
+The expression has to be wrapped in this container so that .Map operator can be called on it later on.
+## Map
+`setMonad(Expression).map(Function)`:
+This signature is used to call map operation on the expression container.<br />
+map takes a well-defined function as a parameter. The function must be able to accept<br />
+the expression as a whole, operate on each element and return either a partial<br />
+eval expression or a fully evaluated set.
+
 ## Exception Definition and Usage
 ```
-//Exception Class definition
+// Exception Class definition
 compute(
     ExceptionClassDef("ExceptionClass1",Field("Private", "Reason")))
     

@@ -26,6 +26,7 @@ object DslMethods {
   private val classMap: mutable.Map[String,Any] = mutable.Map("ClassMap" -> true)
   // Wrapper class to aid Assign operator handle Insert and Delete operations
   case class operationWrapper(operationType:String,set:Operator)
+
   // HW-5
   // Signature of monadic function with map
   trait SetExpression:
@@ -778,19 +779,11 @@ object DslMethods {
     val mutList = mutable.Set.empty[Any]
     args.foreach{i =>
       val g = compute(i,scopeMap)
-
-      if(g.isInstanceOf[Set[Any]]){
-        mutList ++= g.asInstanceOf[Set[Any]]
+      g match {
+        case x: Set[Any] =>  mutList ++= x
+        case y: mutable.Set[Any] =>  mutList ++= y
+        case _ => if (g != "N/A") {mutList += g} else {mutList += i}
       }
-      else if (g.isInstanceOf[mutable.Set[Any]])
-        {
-          mutList ++= g.asInstanceOf[mutable.Set[Any]]
-        }
-      else{
-        if (g != "N/A") {mutList += g} else {mutList += i}
-      }
-
-      // if (g != "N/A") {mutList += g} else {throw DSLException("Variable(s) does not exist")}
     }
     mutList
   }
@@ -798,31 +791,5 @@ object DslMethods {
   // Main method
   @main def runCode(): Unit = {
   // Usage defined in test class
-    compute(Assign(Variable("set5"), Insert(Value("2"), Value(3), Value(89))))
-    compute(Assign(Variable("set6"), Insert(Value("a"), Value(89))))
-    val actual = compute(Union(Variable("set5s"),Variable("set7")))
-    compute(Assign(Variable("set7"), Insert(Value("a"), Value(89))))
-    val op = compute(PartialEval(actual))
-    compute(Assign(Variable("set5s"), Insert(Value("aq"), Value(82329))))
-    val op1 = compute(PartialEval(op))
-    println(actual)
-    println(op1)
-
-//    val op2 = compute(Assign(Variable("set222"), Insert(Variable("set72"), Value(3),Value(12),Variable("set72e"))))
-//    compute(Assign(Variable("set72"), Value("a")))
-//    val op3 = compute(PartialEval(op2))
-//    println(op2)
-//    println(op3)
-//    compute(Assign(Variable("set72e"), Value("j")))
-//    val op4 = compute(PartialEval(op2))
-//    println(op4)
-//
-//    compute(Assign(Variable("set4"), Insert(Value("2"), Value(3))))
-//
-//    val actual = compute(Assign(Variable("set4"), Delete(Variable("set11"))))
-//    compute(Assign(Variable("set11"), Value("2")))
-//    val actual1 = compute(PartialEval(actual))
-//    print(actual)
-//    print(actual1)
   }
 }
