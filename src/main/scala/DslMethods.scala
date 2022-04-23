@@ -26,9 +26,13 @@ object DslMethods {
   private val classMap: mutable.Map[String,Any] = mutable.Map("ClassMap" -> true)
   // Wrapper class to aid Assign operator handle Insert and Delete operations
   case class operationWrapper(operationType:String,set:Operator)
+  // HW-5
+  // Signature of monadic function with map
   trait SetExpression:
     def map(f: Operator => Operator): Operator
+  // Wrapper object to handle the application of map operation
   case class setMonad(setExp: Operator) extends SetExpression:
+    // setMonad map accepts function f and the function is applied on the expression
     override def map(f: Operator => Operator): Operator =
       f(setExp)
 
@@ -81,7 +85,7 @@ object DslMethods {
     {
       op match {
 
-      // Partial exp eval
+      // Partial eval expression can be called by invoking it by wrapping it with this wrapper
       case PartialEval(exps) =>
         compute(exps.asInstanceOf[Operator])
 

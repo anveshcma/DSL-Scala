@@ -179,4 +179,49 @@ class testHw5 extends AnyFlatSpec with Matchers {
     finalOutput shouldBe completeEval
   }
 
+  it should "check the monad operation with multiply constant transformer function" in {
+    // Transformer function to multiple constant to the first set and return optimized partial eval expression
+    def multiplyConstant(set:Operator) : Operator =
+      set match
+        // add default data to set elements of the variable passed
+        case Variable(name: String, false) =>
+          if (mainBindingMap.contains(name))
+            val temp = mainBindingMap(name).asInstanceOf[mutable.Set[Any]]
+            Value(temp)
+          else
+          // Return Variable(name) if variable is not found
+            Variable(name)
+
+        // return partially evaluated intersection expression
+        // y will be replaced with Value(mutable.Set("common multiple")) irrespective of what the user enters.
+        case Product(x,y) =>
+          val s1 = setMonad(x).map(multiplyConstant)
+          val s2 = Value(mutable.Set("common multiple"))
+          Product(s1,s2)
+        case _ =>
+          throw DSLException("The defined function cannot optimize this expression.")
+
+    // define set4321
+    compute(Assign(Variable("set4321"), Insert(Value("data1"), Value("data2"))))
+
+    // define the Intersection expression. Variable("Replace") will be replaced with value defined in function.
+    val expression = Product(Variable("set4321"),Variable("Replace"))
+    // wrap the set expression with the monad case-class
+    val wrappedSet = setMonad(expression)
+
+    // call the map monad function on the expression with multiplyConstant function
+    // the map applies the passed function on the elements of the expression
+    // we get back partial eval expression as defined in transformer function
+    val partialExp = wrappedSet.map(multiplyConstant)
+    //  Partial eval expression.
+    val expected = Product(Value(mutable.Set("data1","data2")),Value(mutable.Set("common multiple")))
+    expected shouldBe partialExp
+
+    // now when the partial eval expression is called, it performs product of the 2 sets.
+    val completeEval = compute(PartialEval(partialExp))
+    // expected output set data.
+    val finalOutput = scala.collection.mutable.Set(("data1","common multiple"),("data2","common multiple"))
+
+    finalOutput shouldBe completeEval
+  }
 }
