@@ -1,18 +1,13 @@
 /*
 Anvesh Koganti
 670875073
-CS474 - Homework 4
+CS474 - Homework 5
 */
-/*
-To DO
-1- Modify all possible exps to handle partial eval
-*/
+
 import com.sun.jdi.InvalidTypeException
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-
-
 
 // Custom exception class
 final case class DSLException(private val message: String = "",
