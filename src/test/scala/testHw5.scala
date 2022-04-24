@@ -33,13 +33,13 @@ class testHw5 extends AnyFlatSpec with Matchers {
 
   it should "check the partial eval with 2 undefined var - Difference" in {
     // Both variables are not defined. Evaluates to partial exp.
-    val partialExp = compute(Difference(Variable("set99"),Variable("set109")))
-    // set99 and set109 data are as they are. No change.
-    val expected = Difference(Variable("set99"),Variable("set109"))
+    val partialExp = compute(Difference(Variable("set991"),Variable("set1091")))
+    // set991 and set1091 data are as they are. No change.
+    val expected = Difference(Variable("set991"),Variable("set1091"))
     expected shouldBe partialExp
-    // define set99 and set109
-    compute(Assign(Variable("set99"), Insert(Value("abc"), Value(3))))
-    compute(Assign(Variable("set109"), Insert(Value("abc"))))
+    // define set991 and set1091
+    compute(Assign(Variable("set991"), Insert(Value("abc"), Value(3))))
+    compute(Assign(Variable("set1091"), Insert(Value("abc"))))
     // now when the partial eval expression is called, it performs difference and outputs a set.
     val completeEval = compute(PartialEval(partialExp))
     // expected output set data.
