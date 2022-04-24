@@ -35,6 +35,18 @@ Operations that support partial evaluation and optimization: Union, Intersection
 // This expression will result in a set if both the variables are defined in the reference env.
     compute(PartialEval(partialExp))
 ```
+```
+// Partial eval and optimization example using Insert:
+// Define a set
+    compute(Assign(Variable("set21"), Insert(Value("abc"), Value(4), Value(89))))
+// set21 is defined. So 3 and data in set21 is optimized into a single Value and partial exp is returned.
+    val partialExp = compute(Assign(Variable("set299"), Insert(Variable("set19"),Variable("set21"), Value(3)))) 
+// This gets optimized to Assign(Variable("set299"),Insert(Value(Set("abc",3, 4, 89)), 
+// Integer 3 and set 21 get combined into a single value.
+// To evaluate partial exp, use the following syntax
+// This expression will result in a set if set19 is also defined in the reference env.
+    compute(PartialEval(partialExp))
+```
 ### PartialEval
 `PartialEval`(Expression):
 This signature is used to invoke a partially evaluated expression. <br />
