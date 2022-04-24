@@ -86,12 +86,11 @@ class testHw5 extends AnyFlatSpec with Matchers {
           if (mainBindingMap.contains(name))
             val temp = mainBindingMap(name).asInstanceOf[mutable.Set[Any]]
             val newSet = mutable.Set[Any]()
-            for (e <- temp){
+            temp.foreach(e =>
               e match
                 case x:String => newSet += x*2
                 case y:Int => newSet += y*2
-                case _ =>
-            }
+                case _ =>)
             // return the new doubled elements set
             Value(newSet)
           else
