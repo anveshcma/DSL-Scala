@@ -1,10 +1,8 @@
-# CS 474 - HW 5
-Anvesh Koganti <br />
-670875073<br /><br />
-HW-5 specific documentation can be found in this section:
-[Partial Evaluation and Optimization](#partial-evaluation-and-optimization) and [Monad Function Map](#monad-function-map)
-<br />
-Test class specific to HW-5: testHw5.scala
+# Intro: DSL using Scala
+This project was done as part of course requirements for the course CS-474 taught by Prof. Mark Grechanik at UIC.<br />
+
+
+
 # Usage
 Use 'sbt clean compile test' to run the test script. Use 'sbt clean compile run' to run the main method. <br />
 To use the methods from the DslMethods.scala file use these 2 lines at the top of the file: <br />
